@@ -1,6 +1,5 @@
-import http from 'http';
-import { WebSocketServer } from 'ws';
-
+const http = require('http');
+const WebSocketServer = require('ws').Server;
 const PORT = process.env.PORT || 3000;
 
 // Create a basic HTTP server (so Railway can connect)
