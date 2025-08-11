@@ -11,21 +11,27 @@ const server = http.createServer((req, res) => {
 // Attach WebSocket to HTTP server
 const wss = new WebSocketServer({ server });
 
-wss.on('connection', ws => {
-    console.log('New client connected');
+let messageHistory = [];
 
-    ws.on('message', message => {
-        console.log(`Received: ${message}`);
-        // Broadcast to all clients
+wss.on('connection', ws => {
+    // Send chat history to new client
+    ws.send(JSON.stringify({ type: 'history', data: messageHistory }));
+
+    ws.on('message', msg => {
+        const data = msg.toString();
+        messageHistory.push(JSON.parse(data)); // store message
+        // Keep only last 50 messages
+        if (messageHistory.length > 50) messageHistory.shift();
+
+        // Broadcast to everyone
         wss.clients.forEach(client => {
             if (client.readyState === ws.OPEN) {
-                client.send(message.toString());
+                client.send(data);
             }
         });
     });
-
-    ws.on('close', () => console.log('Client disconnected'));
 });
+
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
