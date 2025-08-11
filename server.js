@@ -1,18 +1,26 @@
-const WebSocket = require('ws');
-const PORT = process.env.PORT || 10000;
+import http from 'http';
+import { WebSocketServer } from 'ws';
 
-const wss = new WebSocket.Server({ port: PORT });
+const PORT = process.env.PORT || 3000;
+
+// Create a basic HTTP server (so Railway can connect)
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('WebSocket server is running\n');
+});
+
+// Attach WebSocket to HTTP server
+const wss = new WebSocketServer({ server });
 
 wss.on('connection', ws => {
     console.log('New client connected');
 
     ws.on('message', message => {
         console.log(`Received: ${message}`);
-
-        // Broadcast to all connected clients
+        // Broadcast to all clients
         wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(message);
+            if (client.readyState === ws.OPEN) {
+                client.send(message.toString());
             }
         });
     });
@@ -20,4 +28,6 @@ wss.on('connection', ws => {
     ws.on('close', () => console.log('Client disconnected'));
 });
 
-console.log(`WebSocket server running on port ${PORT}`);
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
